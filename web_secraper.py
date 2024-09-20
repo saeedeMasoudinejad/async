@@ -4,8 +4,15 @@ import asyncio
 
 
 async def get_web_content(web_url: str) -> str:
-    print("fetch is done")
-    response = requests.get(web_url)
+    # print("fetch is done")
+    try:
+        response = requests.get(web_url)
+    except requests.exceptions.Timeout:
+        response = requests.get(web_url)
+    except requests.exceptions.ConnectionError:
+        response = requests.get(web_url)
+    except requests.exceptions.TooManyRedirects:
+        return
     html_content = response.text
     soup = BeautifulSoup(html_content, 'html.parser')
     return soup
@@ -52,20 +59,25 @@ async def main():
         "https://www.nature.com",
         "https://www.popularmechanics.com"
     ]
-    # asyncio.gather(get_web_content(url) for url in web_urls)
-    web_html_content = list()
-    for index, url in enumerate(web_urls):
-        task_fetch_web_html_data_index = asyncio.create_task(get_web_content(url))
-        # await task_fetch_web_html_data_index
-    #     print(task_fetch_web_html_data.result())
-    #     web_html_content.append(task_fetch_web_html_data)
+    # web_html_content = list()
+    # tasks = [get_web_content(url) for url in web_urls]
+    # result = asyncio.gather(*tasks)
+    for url in web_urls:
+        task = asyncio.create_task(get_web_content(url))
+        # await task
 
 
 if __name__ == "__main__":
     from time import perf_counter
-    start = perf_counter()
-    asyncio.run(main())
-    end = perf_counter()
-    print("elapsed time: " + str(end - start))
+
+    time_duration = list()
+    for i in range(3):
+        start = perf_counter()
+        asyncio.run(main())
+        end = perf_counter()
+        time_duration.append(end - start)
+    print(sum(time_duration) / 3)
     # main()
-#     26.366574541083537
+# sync ------------------------>27.64769868098665
+# async ----------------------->30.29525362533362
+# asyn_with_gathering --------> 28.16176266669451
